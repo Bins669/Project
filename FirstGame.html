@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Word Guess Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: linear-gradient(to bottom, #1e90ff, #00bfff);
+      color: white;
+      transition: background 0.5s ease-in-out;
+    }
+    .container {
+      max-width: 400px;
+      margin: auto;
+      background: #008cff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+    }
+    .word-display {
+      font-size: 24px;
+      margin: 20px;
+      letter-spacing: 10px;
+    }
+    .letters button {
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 18px;
+      margin: 5px;
+      transition: background 0.3s;
+    }
+    .letters button.correct {
+      background-color: green;
+      color: white;
+    }
+    .letters button.wrong {
+      background-color: red;
+      color: white;
+    }
+    .hearts {
+      font-size: 24px;
+      color: red;
+    }
+    .controls button {
+      padding: 12px 20px;
+      margin: 10px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .win {
+      background-color: green !important;
+    }
+    .lose {
+      background-color: red !important;
+      animation: shake 0.5s;
+    }
+    @keyframes shake {
+      0% { transform: translateX(0px); }
+      25% { transform: translateX(-5px); }
+      50% { transform: translateX(5px); }
+      75% { transform: translateX(-5px); }
+      100% { transform: translateX(0px); }
+    }
+    .confetti {
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 50px;
+      animation: fall 2s linear;
+    }
+    @keyframes fall {
+      from { top: -50px; }
+      to { top: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Word Guess Game</h1>
+  <h2>Score: <span id="score">0</span></h2>
+
+  <div class="container" id="game-container">
+    <p>Hint: <span id="hint">Loading...</span></p>
+    <div class="word-display" id="word-display">_ _ _ _ _ _ _ _</div>
+
+    <p>Attempts: <span class="hearts" id="attempts">❤️❤️❤️</span></p>
+    <p>Level: <span id="level">1</span></p>
+
+    <div class="letters" id="letters"></div>
+
+    <p class="status" id="status"></p>
+
+    <div class="controls">
+      <button id="next-btn" onclick="nextWord()" disabled>Next</button>
+      <button id="try-again-btn" onclick="restartGame()">Try Again</button>
+    </div>
+  </div>
+
+<script>
+    let words = [
+        { word: "BLOCKS", hint: "Visual programming in MIT App Inventor" },
+        { word: "COMPONENTS", hint: "Basic building blocks of an app" },
+        { word: "DESIGNER", hint: "Where you place UI elements in App Inventor" },
+        { word: "EMULATOR", hint: "A virtual Android device for testing apps" },
+        { word: "ANDROID", hint: "MIT App Inventor mainly builds apps for this OS" },
+        { word: "HARDWARE", hint: "The physical parts of a computer" },
+        { word: "SOFTWARE", hint: "Programs and operating systems in a computer" },
+        { word: "INTERNET", hint: "A global network for communication" },
+        { word: "BROWSER", hint: "Used to access websites" },
+        { word: "DATABASE", hint: "Stores and manages digital information" },
+        { word: "MOTHERBOARD", hint: "The main circuit board in a computer" },
+        { word: "PROCESSOR", hint: "Handles instructions and computing tasks" },
+        { word: "MONITOR", hint: "Displays the output from a computer" },
+        { word: "PRINTER", hint: "Used to produce a physical copy of documents" },
+        { word: "OPERATINGSYSTEM", hint: "Manages computer hardware and software" },
+        { word: "GATES", hint: "Co-founder of Microsoft" },
+        { word: "JOBS", hint: "Co-founder of Apple" },
+        { word: "TESLA", hint: "Invented AC electricity, influenced wireless tech" },
+        { word: "BERNERSLEE", hint: "Invented the World Wide Web" },
+        { word: "ZUCKERBERG", hint: "Co-founder of Facebook" },
+        { word: "TINYDB", hint: "A small database component in MIT App Inventor" },
+        { word: "BUTTON", hint: "An interactive UI component in App Inventor" },
+        { word: "CANVAS", hint: "Used for drawing and touch input in App Inventor" },
+        { word: "VARIABLE", hint: "Stores changing values in programming" },
+        { word: "EVENT", hint: "Triggers actions when the user interacts with an app" },
+        { word: "ENCRYPTION", hint: "Secures data by converting it into a coded form" },
+        { word: "FIREWALL", hint: "Protects a network from unauthorized access" },
+        { word: "CYBERSECURITY", hint: "Protecting systems from digital attacks" },
+        { word: "ALGORITHM", hint: "A step-by-step procedure for solving a problem" },
+        { word: "PROGRAMMING", hint: "The process of writing computer code" },
+        { word: "CACHE", hint: "Stores frequently used data for quick access" },
+        { word: "GIGABYTE", hint: "Unit of storage equal to 1024 megabytes" },
+        { word: "TERMINAL", hint: "Command-line interface for executing commands" },
+        { word: "CLOUD", hint: "Storing data on remote servers instead of locally" },
+        { word: "PASSWORD", hint: "A security measure to access digital accounts" },
+        { word: "PAGE", hint: "Co-founder of Google" },
+        { word: "BRIN", hint: "Co-founder of Google" },
+        { word: "TORVALDS", hint: "Creator of Linux OS" },
+        { word: "WATSON", hint: "IBM’s AI system and a key computer scientist" },
+        { word: "HOPPER", hint: "Developed COBOL programming language" },
+        { word: "QUANTUM", hint: "A type of computing using quantum mechanics" },
+        { word: "BIOMETRICS", hint: "Authentication using fingerprint or face recognition" },
+        { word: "BIGDATA", hint: "Large and complex data sets" },
+        { word: "5G", hint: "Fifth generation of mobile networks" },
+        { word: "SMARTPHONE", hint: "A handheld computer with communication features" }
+    ];
+
+    let currentWordIndex = 0;
+    let chosenWord = "";
+    let displayedWord = [];
+    let attempts = 3;
+    let score = 0;
+    let gameOver = false;
+
+    function shuffleQuestions() {
+        words.sort(() => Math.random() - 0.5);
+    }
+
+    function loadWord() {
+        document.body.classList.remove("win", "lose");
+        document.getElementById("game-container").classList.remove("lose");
+        document.getElementById("status").innerText = "";
+        document.getElementById("next-btn").disabled = true;
+        gameOver = false;
+
+        let wordData = words[currentWordIndex];
+        chosenWord = wordData.word.toUpperCase();
+        document.getElementById("hint").innerText = wordData.hint;
+        displayedWord = Array(chosenWord.length).fill("_");
+        document.getElementById("word-display").innerText = displayedWord.join(" ");
+        attempts = 3;
+        updateHearts();
+        document.getElementById("level").innerText = currentWordIndex + 1;
+        loadLetters();
+    }
+
+    function loadLetters() {
+        let lettersContainer = document.getElementById("letters");
+        lettersContainer.innerHTML = "";
+        let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        for (let char of alphabet) {
+            let btn = document.createElement("button");
+            btn.innerText = char;
+            btn.onclick = function () { checkLetter(char, btn); };
+            btn.disabled = false;
+            lettersContainer.appendChild(btn);
+        }
+    }
+
+    function checkLetter(letter, btn) {
+        if (gameOver) return;
+        btn.disabled = true;
+        let found = false;
+
+        for (let i = 0; i < chosenWord.length; i++) {
+            if (chosenWord[i] === letter) {
+                displayedWord[i] = letter;
+                found = true;
+            }
+        }
+
+        document.getElementById("word-display").innerText = displayedWord.join(" ");
+
+        if (!found) {
+            attempts--;
+            updateHearts();
+            btn.classList.add("wrong");
+            if (attempts === 0) {
+                loseGame();
+            }
+        } else {
+            btn.classList.add("correct");
+            if (!displayedWord.includes("_")) {
+                winGame();
+            }
+        }
+    }
+
+    function updateHearts() {
+        document.getElementById("attempts").innerText = "❤️".repeat(attempts);
+    }
+
+    function winGame() {
+        document.body.classList.add("win");
+        document.getElementById("status").innerText = "🎉 You Win! 🎉";
+        score += 10;
+        document.getElementById("score").innerText = score;
+        document.getElementById("next-btn").disabled = false;
+    }
+
+    function loseGame() {
+        document.body.classList.add("lose");
+        document.getElementById("status").innerText = "❌ Game Over! ❌";
+        gameOver = true;
+        document.getElementById("next-btn").disabled = true;
+        disableAllLetters();
+    }
+
+    function disableAllLetters() {
+        let buttons = document.getElementById("letters").getElementsByTagName("button");
+        for (let btn of buttons) {
+            btn.disabled = true;
+        }
+    }
+
+    function nextWord() {
+        if (gameOver) return;
+        currentWordIndex++;
+        if (currentWordIndex >= words.length) {
+            document.getElementById("status").innerText = "🎉 You completed all levels! 🎉";
+            return;
+        }
+        loadWord();
+    }
+
+    function restartGame() {
+        shuffleQuestions();
+        currentWordIndex = 0;
+        score = 0;
+        document.getElementById("score").innerText = score;
+        loadWord();
+    }
+
+    shuffleQuestions();
+    loadWord();
+</script>
+
+</body>
+</html>
